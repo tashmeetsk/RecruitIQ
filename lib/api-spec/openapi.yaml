@@ -3,20 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: RecruitIQ API — recruitment knowledge management system
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: candidates
+    description: Candidate management
+  - name: preferences
+    description: Candidate preferences
+  - name: jobs
+    description: Job openings
+  - name: status
+    description: Candidate job status tracking
+  - name: dashboard
+    description: Dashboard summaries
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +36,904 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email (simple, no password)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current logged-in user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── Candidates ────────────────────────────────────────────────────────────
+  /candidates:
+    get:
+      operationId: listCandidates
+      tags: [candidates]
+      summary: List candidates with optional filters
+      parameters:
+        - name: roleCategoryFilter
+          in: query
+          schema:
+            type: string
+        - name: statusFilter
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CandidateWithPreferences"
+
+    post:
+      operationId: createCandidate
+      tags: [candidates]
+      summary: Create a new candidate with preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateInput"
+      responses:
+        "201":
+          description: Created candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateWithPreferences"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /candidates/check-duplicate:
+    post:
+      operationId: checkCandidateDuplicate
+      tags: [candidates]
+      summary: Check if a candidate already exists by email or phone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DuplicateCheckInput"
+      responses:
+        "200":
+          description: Duplicate check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DuplicateCheckResult"
+
+
+  /candidates/{id}:
+    get:
+      operationId: getCandidate
+      tags: [candidates]
+      summary: Get candidate by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Candidate details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateWithPreferences"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      operationId: updateCandidate
+      tags: [candidates]
+      summary: Update a candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateUpdate"
+      responses:
+        "200":
+          description: Updated candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateWithPreferences"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteCandidate
+      tags: [candidates]
+      summary: Delete a candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /candidates/{id}/preferences:
+    get:
+      operationId: getCandidatePreferences
+      tags: [preferences]
+      summary: Get preferences for a candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Candidate preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidatePreference"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: upsertCandidatePreferences
+      tags: [preferences]
+      summary: Create or update preferences for a candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidatePreferenceInput"
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidatePreference"
+
+  /candidates/{id}/job-statuses:
+    get:
+      operationId: getCandidateJobStatuses
+      tags: [status]
+      summary: Get all job statuses for a specific candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of job statuses for candidate
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CandidateJobStatusWithJob"
+
+  # ── Job Openings ──────────────────────────────────────────────────────────
+  /job-openings:
+    get:
+      operationId: listJobOpenings
+      tags: [jobs]
+      summary: List all job openings
+      responses:
+        "200":
+          description: List of job openings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobOpening"
+
+    post:
+      operationId: createJobOpening
+      tags: [jobs]
+      summary: Create a new job opening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobOpeningInput"
+      responses:
+        "201":
+          description: Created job opening
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobOpening"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /job-openings/{id}:
+    get:
+      operationId: getJobOpening
+      tags: [jobs]
+      summary: Get job opening by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job opening details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobOpening"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      operationId: updateJobOpening
+      tags: [jobs]
+      summary: Update a job opening
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobOpeningUpdate"
+      responses:
+        "200":
+          description: Updated job opening
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobOpening"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteJobOpening
+      tags: [jobs]
+      summary: Delete a job opening
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /job-openings/{id}/matches:
+    get:
+      operationId: getJobMatches
+      tags: [jobs]
+      summary: Get candidates matching a job's role category, sorted by last_verified_at
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Matched candidates with their status for this job
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CandidateMatchResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Candidate Job Status ──────────────────────────────────────────────────
+  /candidate-job-status:
+    get:
+      operationId: listCandidateJobStatuses
+      tags: [status]
+      summary: List candidate job statuses with optional filters
+      parameters:
+        - name: jobId
+          in: query
+          schema:
+            type: integer
+        - name: candidateId
+          in: query
+          schema:
+            type: integer
+        - name: statusFilter
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CandidateJobStatus"
+
+    post:
+      operationId: upsertCandidateJobStatus
+      tags: [status]
+      summary: Create or update a candidate's status for a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateJobStatusInput"
+      responses:
+        "200":
+          description: Upserted status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateJobStatus"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /candidate-job-status/{id}:
+    patch:
+      operationId: updateCandidateJobStatus
+      tags: [status]
+      summary: Update an existing candidate job status entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateJobStatusUpdate"
+      responses:
+        "200":
+          description: Updated status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateJobStatus"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Dashboard ─────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    SuccessResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    # ── Auth ──────────────────────────────────────────────────────────────
+    AuthUser:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+
+    LoginInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+
+    # ── Candidates ────────────────────────────────────────────────────────
+    Candidate:
+      type: object
+      required: [id, name, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        resumeText:
+          type: ["string", "null"]
+        skills:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+          enum: [resume, chat, voice, mixed, null]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CandidateWithPreferences:
+      type: object
+      required: [id, name, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        resumeText:
+          type: ["string", "null"]
+        skills:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        preferences:
+          $ref: "#/components/schemas/CandidatePreference"
+
+    CandidateInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        resumeText:
+          type: string
+        skills:
+          type: string
+        source:
+          type: string
+        preferences:
+          $ref: "#/components/schemas/CandidatePreferenceInput"
+
+    CandidateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        resumeText:
+          type: string
+        skills:
+          type: string
+        source:
+          type: string
+        preferences:
+          $ref: "#/components/schemas/CandidatePreferenceInput"
+
+    DuplicateCheckInput:
+      type: object
+      properties:
+        email:
+          type: string
+        phone:
+          type: string
+
+    DuplicateCheckResult:
+      type: object
+      required: [isDuplicate]
+      properties:
+        isDuplicate:
+          type: boolean
+        existingCandidate:
+          $ref: "#/components/schemas/Candidate"
+
+    ExtractedCandidateInfo:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        skills:
+          type: ["string", "null"]
+        desiredRole:
+          type: ["string", "null"]
+        desiredRoleCategory:
+          type: ["string", "null"]
+        salaryExpectation:
+          type: ["string", "null"]
+        noticePeriod:
+          type: ["string", "null"]
+        wfhPreference:
+          type: ["string", "null"]
+        relocationWillingness:
+          type: ["boolean", "null"]
+        shiftPreference:
+          type: ["string", "null"]
+        careerInterests:
+          type: ["string", "null"]
+
+    # ── Candidate Preferences ─────────────────────────────────────────────
+    CandidatePreference:
+      type: object
+      required: [id, candidateId, updatedAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        desiredRole:
+          type: ["string", "null"]
+        desiredRoleCategory:
+          type: ["string", "null"]
+        salaryExpectation:
+          type: ["string", "null"]
+        noticePeriod:
+          type: ["string", "null"]
+        wfhPreference:
+          type: ["string", "null"]
+        relocationWillingness:
+          type: ["boolean", "null"]
+        shiftPreference:
+          type: ["string", "null"]
+        careerInterests:
+          type: ["string", "null"]
+        lastVerifiedAt:
+          type: ["string", "null"]
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CandidatePreferenceInput:
+      type: object
+      properties:
+        desiredRole:
+          type: string
+        desiredRoleCategory:
+          type: string
+        salaryExpectation:
+          type: string
+        noticePeriod:
+          type: string
+        wfhPreference:
+          type: string
+        relocationWillingness:
+          type: boolean
+        shiftPreference:
+          type: string
+        careerInterests:
+          type: string
+        lastVerifiedAt:
+          type: string
+          format: date-time
+
+    # ── Job Openings ──────────────────────────────────────────────────────
+    JobOpening:
+      type: object
+      required: [id, title, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        roleCategory:
+          type: ["string", "null"]
+        requirements:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    JobOpeningInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        roleCategory:
+          type: string
+        requirements:
+          type: string
+
+    JobOpeningUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        roleCategory:
+          type: string
+        requirements:
+          type: string
+
+    CandidateMatchResult:
+      type: object
+      required: [candidate]
+      properties:
+        candidate:
+          $ref: "#/components/schemas/CandidateWithPreferences"
+        jobStatus:
+          $ref: "#/components/schemas/CandidateJobStatus"
+
+    # ── Candidate Job Status ──────────────────────────────────────────────
+    CandidateJobStatus:
+      type: object
+      required: [id, candidateId, jobId, status, updatedAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        status:
+          type: string
+          enum: [matched, rejected, open_for_future, interested, contacted]
+        updatedBy:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+
+    CandidateJobStatusWithJob:
+      type: object
+      required: [id, candidateId, jobId, status, updatedAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        status:
+          type: string
+          enum: [matched, rejected, open_for_future, interested, contacted]
+        updatedBy:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+        job:
+          $ref: "#/components/schemas/JobOpening"
+
+    CandidateJobStatusInput:
+      type: object
+      required: [candidateId, jobId, status]
+      properties:
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        status:
+          type: string
+          enum: [matched, rejected, open_for_future, interested, contacted]
+        updatedBy:
+          type: string
+
+    CandidateJobStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [matched, rejected, open_for_future, interested, contacted]
+        updatedBy:
+          type: string
+
+    # ── Dashboard ─────────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [totalCandidates, totalJobs, byCandidateStatus, byCandidateRoleCategory, recentCandidates]
+      properties:
+        totalCandidates:
+          type: integer
+        totalJobs:
+          type: integer
+        byCandidateStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        byCandidateRoleCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleCategoryCount"
+        recentCandidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateWithPreferences"
+
+    StatusCount:
+      type: object
+      required: [status, count]
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+
+    RoleCategoryCount:
+      type: object
+      required: [roleCategory, count]
+      properties:
+        roleCategory:
+          type: string
+        count:
+          type: integer

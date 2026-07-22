@@ -1,0 +1,127 @@
+Build a full-stack web app called RecruitIQ — a recruitment knowledge management 
+system. Use React for the frontend, Node.js/Express for the backend, and PostgreSQL 
+for the database (use Replit's built-in Postgres database).
+
+
+DATABASE SCHEMA (create exactly this, do not add extra tables or change field names):
+
+-- ============================================
+-- CANDIDATES: core info about each person
+-- ============================================
+CREATE TABLE candidates (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    resume_text TEXT,              -- raw text extracted from resume (for search/reference)
+    skills TEXT,                   -- comma-separated or freeform, kept simple for MVP
+    source TEXT CHECK (source IN ('resume', 'chat', 'voice', 'mixed')),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Speeds up duplicate-candidate lookups by email/phone before inserting a new person
+CREATE INDEX idx_candidates_email ON candidates(email);
+CREATE INDEX idx_candidates_phone ON candidates(phone);
+
+-- ============================================
+-- CANDIDATE_PREFERENCES: what the AI extracts
+-- One row per candidate (1-to-1 with candidates)
+-- ============================================
+CREATE TABLE candidate_preferences (
+    id SERIAL PRIMARY KEY,
+    candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+    desired_role TEXT,                  -- raw text as extracted, e.g. "People Operations"
+    desired_role_category TEXT,         -- standardized bucket, e.g. "HR" — used for searching/matching
+    salary_expectation TEXT,            -- kept as text since ranges like "8-10 LPA" are common
+    notice_period TEXT,                 -- e.g. "immediate", "30 days", "60 days"
+    wfh_preference TEXT CHECK (wfh_preference IN ('remote', 'hybrid', 'onsite', 'no_preference')),
+    relocation_willingness BOOLEAN,
+    shift_preference TEXT,              -- e.g. "day", "night", "flexible"
+    career_interests TEXT,              -- freeform notes on long-term interests
+    last_verified_at TIMESTAMP,         -- last time someone actually confirmed candidate is still available
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_preferences_role_category ON candidate_preferences(desired_role_category);
+
+-- ============================================
+-- JOB_OPENINGS: the roles you're hiring for
+-- ============================================
+CREATE TABLE job_openings (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    role_category TEXT,            -- standardized bucket, matches desired_role_category above
+    requirements TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================
+-- CANDIDATE_JOB_STATUS: the junction table
+-- Tracks each candidate's status PER job opening,
+-- so the same person can be "rejected" for one role
+-- and "open" for another, over time.
+-- ============================================
+CREATE TABLE candidate_job_status (
+    id SERIAL PRIMARY KEY,
+    candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+    job_id INTEGER NOT NULL REFERENCES job_openings(id) ON DELETE CASCADE,
+    status TEXT CHECK (status IN ('matched', 'rejected', 'open_for_future', 'interested', 'contacted')) NOT NULL,
+    updated_by TEXT,               -- name of whoever last changed this status (Tashmeet / friend 1 / friend 2)
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (candidate_id, job_id)
+);
+
+CREATE INDEX idx_status_lookup ON candidate_job_status(status, job_id);
+
+
+CORE FEATURES TO BUILD:
+
+1. Add Candidate flow:
+   - A form to upload a resume file (PDF, DOCX, or image file — for DOCX files, extract 
+     the text content first using a text-extraction library before sending to Gemini, 
+     since Gemini cannot read DOCX directly), paste/upload chat notes (text, or a chat 
+     screenshot image), and optionally upload a voice note (audio file)
+   - Before saving, check if a candidate with the same email or phone already 
+     exists in the database. If so, show a warning: "This candidate may already 
+     exist — update their existing profile instead of creating a duplicate" and 
+     link to that existing profile instead of creating a new one.
+   - Send the resume, notes, and voice note together to the Gemini API 
+     (I will provide the API key as a Replit Secret named GEMINI_API_KEY) with a 
+     prompt asking it to extract: desired_role, desired_role_category (map to the 
+     closest one from this fixed list: HR, Sales, Backend Developer, Frontend 
+     Developer, Marketing, Operations, Customer Support), salary_expectation, 
+     notice_period, wfh_preference, relocation_willingness, shift_preference, 
+     career_interests, key_skills — return as JSON only.
+   - Show the extracted JSON back to the user as an EDITABLE form (do not auto-save 
+     without human review) so they can correct any field before saving.
+   - On confirm, save to the candidates and candidate_preferences tables.
+
+2. Job Openings page:
+   - Simple form to create a job opening (title, role_category, requirements)
+   - List view of all open job openings
+
+3. Candidate search/match page:
+   - Search/filter candidates by desired_role_category and by status
+   - For a selected job opening, show all candidates whose desired_role_category 
+     matches, along with how long ago their data was last verified 
+     (last_verified_at), sorted so recently verified candidates show first
+   - Allow updating a candidate's status for a specific job (matched, rejected, 
+     open_for_future, interested, contacted) — record who made the update 
+     (updated_by) and update last_verified_at to now whenever a status change 
+     happens, since that implies someone just checked in on them
+
+4. Basic login:
+   - Simple login for 3 known users (just email/name based, no need for complex 
+     auth or password reset flows) so we can track who does what
+
+DO NOT BUILD YET (explicitly skip these for now):
+   - Semantic/AI-based matching or embeddings — keep matching to simple text/category 
+     filtering as described above
+   - Multi-tenant support or company accounts
+   - Power BI integration — I will connect that separately later, just make sure 
+     the database is a standard Postgres instance I can get a connection string for
+   - Complex role-based permissions — all 3 users have equal access for now
+
+Please build this step by step, starting with the database schema and basic 
+Add Candidate flow first, then Job Openings, then the search/match page, then login.

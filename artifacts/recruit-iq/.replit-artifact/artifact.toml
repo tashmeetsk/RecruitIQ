@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "RecruitIQ"
+version = "1.0.0"
+id = "artifacts/recruit-iq"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22600
+
+[services.development]
+run = "pnpm --filter @workspace/recruit-iq run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/recruit-iq", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/recruit-iq/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22600"
+BASE_PATH = "/"
