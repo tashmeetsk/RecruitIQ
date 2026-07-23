@@ -3,11 +3,12 @@ import { LoginBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-// 3 known users — simple email-based auth, no passwords
+const SHARED_PASSWORD = "AlliedVista";
+
 const KNOWN_USERS = [
-  { id: 1, name: "Tashmeet", email: "tashmeet@company.com" },
-  { id: 2, name: "Alex", email: "alex@company.com" },
-  { id: 3, name: "Jordan", email: "jordan@company.com" },
+  { id: 1, name: "Tashmeet", email: "tashmeetkatara@gmail.com" },
+  { id: 2, name: "Triansh", email: "trianshk@gmail.com" },
+  { id: 3, name: "Sourabh", email: "sourabh987159@gmail.com" },
 ];
 
 router.post("/auth/login", async (req, res): Promise<void> => {
@@ -17,12 +18,14 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
+  const { email, password } = parsed.data;
+
   const user = KNOWN_USERS.find(
-    (u) => u.email.toLowerCase() === parsed.data.email.toLowerCase(),
+    (u) => u.email.toLowerCase() === email.toLowerCase(),
   );
 
-  if (!user) {
-    res.status(401).json({ error: "Unknown email. Only authorised team members can log in." });
+  if (!user || password !== SHARED_PASSWORD) {
+    res.status(401).json({ error: "Invalid email or password." });
     return;
   }
 

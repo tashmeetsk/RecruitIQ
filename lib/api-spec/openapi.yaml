@@ -590,9 +590,11 @@ components:
 
     LoginInput:
       type: object
-      required: [email]
+      required: [email, password]
       properties:
         email:
+          type: string
+        password:
           type: string
 
     # ── Candidates ────────────────────────────────────────────────────────

@@ -20,7 +20,8 @@ export const HealthCheckResponse = zod.object({
  * @summary Login with email (simple, no password)
  */
 export const LoginBody = zod.object({
-  "email": zod.string()
+  "email": zod.string(),
+  "password": zod.string()
 })
 
 export const LoginResponse = zod.object({

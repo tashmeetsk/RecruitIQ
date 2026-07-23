@@ -1,41 +1,61 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLogin } from "@workspace/api-client-react";
+import { useLogin, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetMeQueryKey } from "@workspace/api-client-react";
+import { useAuth } from "@/lib/auth";
+import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const loginMutation = useLogin();
+  const { user, isLoading: isSessionLoading } = useAuth();
+
+  // If already authenticated, redirect away from login
+  useEffect(() => {
+    if (!isSessionLoading && user) {
+      setLocation("/");
+    }
+  }, [user, isSessionLoading, setLocation]);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   function onSubmit(values: z.infer<typeof loginSchema>) {
-    loginMutation.mutate({ data: { email: values.email } }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
-        setLocation("/");
+    // Block submission until the initial session check has settled,
+    // so we don't race against a pending /auth/me 401 that would boot
+    // the user back to this page right after a successful login.
+    if (isSessionLoading) return;
+
+    loginMutation.mutate(
+      { data: { email: values.email, password: values.password } },
+      {
+        onSuccess: (userData) => {
+          // Cancel any in-flight /auth/me requests and seed the cache
+          // immediately so the ProtectedRoute never sees user=null.
+          queryClient.cancelQueries({ queryKey: getGetMeQueryKey() });
+          queryClient.setQueryData(getGetMeQueryKey(), userData);
+          setLocation("/");
+        },
+        onError: (err: any) => {
+          const msg = err?.response?.data?.error ?? err?.message ?? "Login failed";
+          form.setError("root", { message: msg });
+        },
       },
-      onError: (err: any) => {
-        form.setError("email", { message: err?.error || "Login failed" });
-      }
-    });
+    );
   }
 
   return (
@@ -47,7 +67,7 @@ export default function Login() {
           </div>
           <div className="space-y-1">
             <CardTitle className="text-2xl">RecruitIQ</CardTitle>
-            <CardDescription>Enter your email to access the ops terminal.</CardDescription>
+            <CardDescription>Sign in to access the ops terminal.</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -56,20 +76,38 @@ export default function Login() {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                placeholder="tashmeet@company.com"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
               )}
             </div>
-            <Button type="submit" className="w-full font-semibold" disabled={loginMutation.isPending}>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                {...form.register("password")}
+              />
+              {form.formState.errors.password && (
+                <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+              )}
+            </div>
+            {form.formState.errors.root && (
+              <p className="text-xs text-destructive text-center">{form.formState.errors.root.message}</p>
+            )}
+            <Button
+              type="submit"
+              className="w-full font-semibold"
+              disabled={loginMutation.isPending || isSessionLoading}
+            >
               {loginMutation.isPending ? "Authenticating..." : "Login"}
             </Button>
-            <div className="text-center text-xs text-muted-foreground pt-4">
-              Authorized users only. Valid demo accounts:<br/>
-              tashmeet@company.com, alex@company.com, jordan@company.com
-            </div>
           </form>
         </CardContent>
       </Card>
