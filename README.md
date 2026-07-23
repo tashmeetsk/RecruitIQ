@@ -24,22 +24,27 @@ Recruiters talk to hundreds of candidates, and valuable details — preferred ro
 <!-- Add screenshots below. Suggested sections: -->
 
 ### Dashboard
-<!-- screenshot here -->
+<img width="1911" height="914" alt="image" src="https://github.com/user-attachments/assets/bc3c2dea-9ef3-4d33-8af8-0618fd051f13" />
+
 
 ### Add Candidate Flow
-<!-- screenshot here -->
+<img width="906" height="687" alt="image" src="https://github.com/user-attachments/assets/7609aad1-b550-4cda-8ace-c5215de01883" />
+
 
 ### Candidate Extraction Review
-<!-- screenshot here -->
+<img width="709" height="850" alt="image" src="https://github.com/user-attachments/assets/fdd10ce7-5bc3-432d-aeb1-a747ad5faa94" />
+
 
 ### Candidates List
-<!-- screenshot here -->
+<img width="1911" height="914" alt="image" src="https://github.com/user-attachments/assets/34ec33c4-f5a3-4477-ac5c-bee8d4362cb3" />
+
 
 ### Job Openings
-<!-- screenshot here -->
+<img width="1915" height="915" alt="image" src="https://github.com/user-attachments/assets/fe7c4f57-fdac-42ff-ac26-161f6ce345da" />
+
 
 ### Candidate Matching / Status Update
-<!-- screenshot here -->
+<img width="1915" height="916" alt="image" src="https://github.com/user-attachments/assets/1f405e47-0bcd-4522-8c21-25654345bbd5" />
 
 ---
 
