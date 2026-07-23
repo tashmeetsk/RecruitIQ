@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { logger } from "./logger";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -50,32 +50,35 @@ export interface ExtractedInfo {
   careerInterests: string | null;
 }
 
-interface FilePart {
-  inlineData: {
-    data: string;
-    mimeType: string;
-  };
+interface InlineFilePart {
+  inlineData: { data: string; mimeType: string };
 }
 
 interface TextPart {
   text: string;
 }
 
-type Part = FilePart | TextPart;
+export type ExtractionPart = InlineFilePart | TextPart;
 
-export async function extractCandidateInfo(parts: Part[]): Promise<ExtractedInfo> {
+export async function extractCandidateInfo(parts: ExtractionPart[]): Promise<ExtractedInfo> {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-  const contentParts: Part[] = [{ text: EXTRACTION_PROMPT }, ...parts];
+  const contents = [
+    { text: EXTRACTION_PROMPT },
+    ...parts,
+  ];
 
   try {
-    const result = await model.generateContent(contentParts as any);
-    const text = result.response.text().trim();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: contents }],
+    });
+
+    const text = response.text?.trim() ?? "";
 
     // Strip markdown code blocks if present
     const cleaned = text
