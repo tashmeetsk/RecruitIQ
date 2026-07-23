@@ -44,7 +44,8 @@ Recruiters talk to hundreds of candidates, and valuable details — preferred ro
 
 
 ### Candidate Matching / Status Update
-<img width="1915" height="916" alt="image" src="https://github.com/user-attachments/assets/1f405e47-0bcd-4522-8c21-25654345bbd5" />
+<img width="1914" height="917" alt="image" src="https://github.com/user-attachments/assets/576fd6ef-544c-4046-bcc6-fd040b4f95fd" />
+
 
 ---
 
