@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronLeft, UserCircle2, Mail, Phone, MapPin, Briefcase, FileText } from "lucide-react";
+import { ChevronLeft, CircleUser as UserCircle2, Mail, Phone, MapPin, Briefcase, FileText } from "lucide-react";
 
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
