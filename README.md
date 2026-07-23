@@ -90,7 +90,7 @@ Four core tables:
 
 ## 👥 Team
 
-Built by Tashmeet and team.
+Built by Tashmeet, Sourabh & Triansh
 
 ---
 
