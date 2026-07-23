@@ -74,7 +74,7 @@ export async function extractCandidateInfo(parts: ExtractionPart[]): Promise<Ext
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-flash-latest",
       contents: [{ role: "user", parts: contents }],
     });
 
