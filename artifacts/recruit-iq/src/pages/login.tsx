@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
