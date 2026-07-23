@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateCandidate, useCheckCandidateDuplicate, ExtractedCandidateInfo } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ROLE_CATEGORIES } from "@/lib/constants";
-import { Upload, FileText, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { Upload, FileText, Check, TriangleAlert as AlertTriangle, Loader as Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function NewCandidate() {
