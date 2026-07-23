@@ -1,6 +1,6 @@
 import { useParams, Link } from "wouter";
 import { AppLayout } from "@/components/layout";
-import { useGetJobOpening, useGetJobMatches, useUpdateCandidateJobStatus, useUpsertCandidateJobStatus } from "@workspace/api-client-react";
+import { useGetJobOpening, useGetJobMatches, useUpdateCandidateJobStatus, useUpsertCandidateJobStatus, getGetJobOpeningQueryKey, getGetJobMatchesQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -18,8 +18,8 @@ export default function JobDetail() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: job, isLoading: jobLoading } = useGetJobOpening(jobId, { query: { enabled: !!jobId } });
-  const { data: matches, isLoading: matchesLoading } = useGetJobMatches(jobId, { query: { enabled: !!jobId } });
+  const { data: job, isLoading: jobLoading } = useGetJobOpening(jobId, { query: { queryKey: getGetJobOpeningQueryKey(jobId), enabled: !!jobId } });
+  const { data: matches, isLoading: matchesLoading } = useGetJobMatches(jobId, { query: { queryKey: getGetJobMatchesQueryKey(jobId), enabled: !!jobId } });
   
   const updateStatusMutation = useUpdateCandidateJobStatus();
   const upsertStatusMutation = useUpsertCandidateJobStatus();

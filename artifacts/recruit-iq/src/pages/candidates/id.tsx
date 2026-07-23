@@ -1,6 +1,6 @@
 import { useParams, Link } from "wouter";
 import { AppLayout } from "@/components/layout";
-import { useGetCandidate, useGetCandidatePreferences, useGetCandidateJobStatuses } from "@workspace/api-client-react";
+import { useGetCandidate, useGetCandidatePreferences, useGetCandidateJobStatuses, getGetCandidateQueryKey, getGetCandidatePreferencesQueryKey, getGetCandidateJobStatusesQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,9 +12,9 @@ export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const candidateId = parseInt(id || "0", 10);
 
-  const { data: candidate, isLoading: candidateLoading } = useGetCandidate(candidateId, { query: { enabled: !!candidateId } });
-  const { data: preferences, isLoading: prefLoading } = useGetCandidatePreferences(candidateId, { query: { enabled: !!candidateId } });
-  const { data: statuses, isLoading: statusLoading } = useGetCandidateJobStatuses(candidateId, { query: { enabled: !!candidateId } });
+  const { data: candidate, isLoading: candidateLoading } = useGetCandidate(candidateId, { query: { queryKey: getGetCandidateQueryKey(candidateId), enabled: !!candidateId } });
+  const { data: preferences, isLoading: prefLoading } = useGetCandidatePreferences(candidateId, { query: { queryKey: getGetCandidatePreferencesQueryKey(candidateId), enabled: !!candidateId } });
+  const { data: statuses, isLoading: statusLoading } = useGetCandidateJobStatuses(candidateId, { query: { queryKey: getGetCandidateJobStatusesQueryKey(candidateId), enabled: !!candidateId } });
 
   if (candidateLoading) return <AppLayout><div className="p-8"><Skeleton className="h-64 w-full" /></div></AppLayout>;
   if (!candidate) return <AppLayout><div className="p-8">Candidate not found</div></AppLayout>;

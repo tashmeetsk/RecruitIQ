@@ -43,7 +43,7 @@ export default function NewJob() {
         setLocation(`/jobs/${job.id}`);
       },
       onError: (err) => {
-        toast({ title: "Error creating job", description: err?.error || "Unknown error", variant: "destructive" });
+        toast({ title: "Error creating job", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
       }
     });
   };

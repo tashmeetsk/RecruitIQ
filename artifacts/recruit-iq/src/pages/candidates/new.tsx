@@ -111,7 +111,7 @@ export default function NewCandidate() {
         setLocation(`/candidates/${candidate.id}`);
       },
       onError: (err) => {
-        toast({ title: "Error saving", description: err?.error || "Unknown error", variant: "destructive" });
+        toast({ title: "Error saving", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
       }
     });
   };

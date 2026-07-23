@@ -13,10 +13,10 @@ import { useDebounce } from "@/hooks/use-debounce";
 function SourceIcon({ source }: { source?: string | null }) {
   if (!source) return <span className="text-muted-foreground">-</span>;
   switch (source) {
-    case 'resume': return <FileText className="w-4 h-4 text-blue-500" title="Resume" />;
-    case 'chat': return <MessageSquare className="w-4 h-4 text-green-500" title="Chat" />;
-    case 'voice': return <Mic className="w-4 h-4 text-purple-500" title="Voice Note" />;
-    case 'mixed': return <Layers className="w-4 h-4 text-orange-500" title="Mixed Sources" />;
+    case 'resume': return <FileText className="w-4 h-4 text-blue-500" aria-label="Resume" />;
+    case 'chat': return <MessageSquare className="w-4 h-4 text-green-500" aria-label="Chat" />;
+    case 'voice': return <Mic className="w-4 h-4 text-purple-500" aria-label="Voice Note" />;
+    case 'mixed': return <Layers className="w-4 h-4 text-orange-500" aria-label="Mixed Sources" />;
     default: return <span className="text-xs">{source}</span>;
   }
 }
